@@ -15,7 +15,6 @@
 #define PHY_ID_YT8511		0x0000010a
 #define PHY_ID_YT8512		0x00000118
 #define PHY_ID_YT8512B		0x00000128
-#define PHY_ID_YT8521		0x0000011a
 #define PHY_ID_YT8522		0x4f51e928
 #define PHY_ID_YT8531S		0x4f51e91a
 #define PHY_ID_YT8531		0x4f51e91b
@@ -1119,7 +1118,7 @@ static int yt8531_rxclk_duty_init(struct phy_device *phydev)
 	return ret;
 }
 
-static int yt8531s_config_init(struct phy_device *phydev)
+static int yt8531S_config_init(struct phy_device *phydev)
 {
 #if (YTPHY8531A_XTAL_INIT)
 	int ret = 0;
@@ -1204,20 +1203,6 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 	}, {
-		PHY_ID_MATCH_EXACT(PHY_ID_YT8521),
-		.name          = "YT8521 Gigabit Ethernet",
-		.features      = PHY_GBIT_FEATURES,
-		.soft_reset    = yt8521_soft_reset,
-		.aneg_done     = yt8521_aneg_done,
-		.config_init   = yt8521_config_init,
-		.read_status   = yt8521_read_status,
-		.suspend       = yt8521_suspend,
-		.resume        = yt8521_resume,
-#if (YTPHY_WOL_FEATURE_ENABLE)
-		.get_wol       = &ytphy_wol_feature_get,
-		.set_wol       = &ytphy_wol_feature_set,
-#endif
-	}, {
 		PHY_ID_MATCH_EXACT(PHY_ID_YT8522),
 		.name           = "YT8522 100M Ethernet",
 		.features       = PHY_BASIC_FEATURES,
@@ -1235,7 +1220,7 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.features      = PHY_GBIT_FEATURES,
 		.soft_reset    = yt8521_soft_reset,
 		.aneg_done     = yt8521_aneg_done,
-		.config_init   = yt8531s_config_init,
+		.config_init   = yt8531S_config_init,
 		.read_status   = yt8521_read_status,
 		.suspend       = yt8521_suspend,
 		.resume        = yt8521_resume,
@@ -1268,7 +1253,6 @@ static const struct mdio_device_id __maybe_unused motorcomm_tbl[] = {
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8511) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8512) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8512B) },
-	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8521) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8522) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8531S) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8531) },
