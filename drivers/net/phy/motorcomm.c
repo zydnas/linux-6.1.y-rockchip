@@ -15,6 +15,7 @@
 #define PHY_ID_YT8511		0x0000010a
 #define PHY_ID_YT8512		0x00000118
 #define PHY_ID_YT8512B		0x00000128
+#define PHY_ID_YT8521S		0x0000011a
 #define PHY_ID_YT8522		0x4f51e928
 #define PHY_ID_YT8531S		0x4f51e91a
 #define PHY_ID_YT8531		0x4f51e91b
@@ -96,6 +97,16 @@ struct yt8011_priv {
 #define YT8512_SPEED_MODE_BIT		14
 #define YT8512_DUPLEX_BIT		13
 #define YT8512_EN_SLEEP_SW_BIT		15
+
+#define YT8521S_EXT_REG_ADDR_OFFSET_REG	0x1E
+#define YT8521S_EXT_REG_DATA_REG	0x1F
+#define YT8521S_EXT_LED2_CFG	0xA00E
+#define YT8521S_EXT_LED1_CFG	0xA00D
+#define YT8521S_EXT_MDIO_CFG_AND_RGMII_OOB_MON	0xA005
+#define YT8521S_EXT_REG_EN_PHYADDR0_OFFSET	6
+#define YT8521S_EXT_COMMON_RGMII_CFG1		0xA003
+#define YT8521S_EXT_REG_TX_OFFSET		0
+#define YT8521S_EXT_REG_RX_OFFSET		10
 
 #define YT8522_TX_CLK_DELAY             0x4210
 #define YT8522_ANAGLOG_IF_CTRL          0x4008
@@ -968,6 +979,69 @@ static int yt8521_resume(struct phy_device *phydev)
 	return 0;
 }
 
+static int yt8521s_config_init(struct phy_device *phydev)
+{
+	struct device_node *of_node = phydev->mdio.dev.of_node;
+	int value;
+	u16 phy_tx_delay = 0;
+	u16 phy_rx_delay = 0;
+
+	/* Reset phy */
+	phy_write(phydev, MII_BMCR, BMCR_RESET);
+	while (BMCR_RESET & phy_read(phydev, MII_BMCR))
+		msleep(30);
+
+	value = phy_read(phydev, MII_BMCR);
+	phy_write(phydev, MII_BMCR, (value & ~BMCR_PDOWN));
+	msleep(50);
+
+	/* Config LED2 to ON when phy link up */
+	phy_write(phydev, YT8521S_EXT_REG_ADDR_OFFSET_REG, YT8521S_EXT_LED2_CFG);
+	msleep(50);
+	phy_write(phydev, YT8521S_EXT_REG_DATA_REG, 0x0070);
+
+	/* Config LED1 to BLINK when phy link up and tx rx active */
+	phy_write(phydev, YT8521S_EXT_REG_ADDR_OFFSET_REG, YT8521S_EXT_LED1_CFG);
+	msleep(50);
+	phy_write(phydev, YT8521S_EXT_REG_DATA_REG, 0x0670);
+
+	/*
+	 * Disable total response phy address 0.
+	 * Only respond to MDIO command whose PHYAD filed equals to PHY address strapping.
+	 */
+	/* Read MDIO_Cfg_And_RGMII_OOB_Mon reg*/
+	phy_write(phydev, YT8521S_EXT_REG_ADDR_OFFSET_REG,
+		YT8521S_EXT_MDIO_CFG_AND_RGMII_OOB_MON);
+	msleep(50);
+	value = phy_read(phydev, YT8521S_EXT_REG_DATA_REG);
+	msleep(50);
+	value &= ~(0x1 << YT8521S_EXT_REG_EN_PHYADDR0_OFFSET);
+	phy_write(phydev, YT8521S_EXT_REG_DATA_REG, value);
+
+	/* Get phy tx/rx delay vlaues from devicetree */
+	if(!of_property_read_u32(of_node, "phy-tx-delay", &value))
+		phy_tx_delay = value;
+	if(!of_property_read_u32(of_node, "phy-rx-delay", &value))
+		phy_rx_delay = value;
+
+	/* Read rgmii cfg1 */
+	phy_write(phydev, YT8521S_EXT_REG_ADDR_OFFSET_REG, YT8521S_EXT_COMMON_RGMII_CFG1);
+	msleep(50);
+	value = phy_read(phydev, YT8521S_EXT_REG_DATA_REG);
+	msleep(50);
+	value &= ~(0xf << YT8521S_EXT_REG_TX_OFFSET);
+	value |= ((phy_tx_delay & 0xf) << YT8521S_EXT_REG_TX_OFFSET);
+	value &= ~(0xf << YT8521S_EXT_REG_RX_OFFSET);
+	value |= ((phy_rx_delay & 0xf) << YT8521S_EXT_REG_RX_OFFSET);
+
+	/* Config phy tx/rx delay */
+	phy_write(phydev, YT8521S_EXT_REG_ADDR_OFFSET_REG, YT8521S_EXT_COMMON_RGMII_CFG1);
+	msleep(50);
+	phy_write(phydev, YT8521S_EXT_REG_DATA_REG, value);
+
+	return 0;
+}
+
 static int yt8522_read_status(struct phy_device *phydev)
 {
 	int speed, speed_mode, duplex, val;
@@ -1203,6 +1277,16 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 	}, {
+		PHY_ID_MATCH_EXACT(PHY_ID_YT8521S),
+		.name		= "YT8521S Gigabit Ethernet",
+		.features	= PHY_GBIT_FEATURES,
+		.flags		= PHY_IS_INTERNAL,
+		.config_init	= yt8521s_config_init,
+		.config_aneg	= genphy_config_aneg,
+		.read_status	= genphy_read_status,
+		.suspend       	= genphy_suspend,
+		.resume         = genphy_resume,
+	}, {
 		PHY_ID_MATCH_EXACT(PHY_ID_YT8522),
 		.name           = "YT8522 100M Ethernet",
 		.features       = PHY_BASIC_FEATURES,
@@ -1253,6 +1337,7 @@ static const struct mdio_device_id __maybe_unused motorcomm_tbl[] = {
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8511) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8512) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8512B) },
+	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8521S) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8522) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8531S) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_YT8531) },
