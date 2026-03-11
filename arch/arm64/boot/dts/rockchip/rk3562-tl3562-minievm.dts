@@ -178,7 +178,7 @@
 	};
 
 	/* to: tl3562-som core board */
-	vdd3v3_som: vcc3v3_sys: regulator-vdd3v3-som {
+	vdd3v3_som: regulator-vdd3v3-som {
 		compatible = "regulator-fixed";
 		regulator-always-on;
 		regulator-boot-on;
@@ -188,7 +188,18 @@
 		vin-supply = <&vdd12v_dcin>;
 	};
 
-	/* enabled by vdd3v3_som */
+	/* vdd3v3 som output to mainboard */
+	vdd3v3_som_out: regulator-vdd3v3-som-out {
+		compatible = "regulator-fixed";
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-name = "vdd3v3_som_out";
+		vin-supply = <&vdd3v3_som>;
+	};
+
+	/* enabled by vdd3v3_som_out */
 	vdd5v0_main: regulator-vdd5v0-main {
 		compatible = "regulator-fixed";
 		regulator-always-on;
@@ -199,7 +210,7 @@
 		vin-supply = <&vdd12v_dcin>;
 	};
 
-	/* enabled by vdd3v3_som */
+	/* enabled by vdd3v3_som_out */
 	vdd3v3_main: regulator-vdd3v3-main {
 		compatible = "regulator-fixed";
 		regulator-always-on;
@@ -210,7 +221,7 @@
 		vin-supply = <&vdd12v_dcin>;
 	};
 
-	/* enabled by vdd3v3_som */
+	/* enabled by vdd3v3_som_out */
 	vdd1v8_main: regulator-vdd1v8-main {
 		compatible = "regulator-fixed";
 		regulator-always-on;
@@ -501,7 +512,7 @@
 		reg = <0x0c>;
 		rockchip,camera-module-index = <2>;
 		rockchip,camera-module-facing = "back";
-		status = "disabled";
+		status = "okay";
 	};
 
 	ov13850_0: ov13850@10 {
@@ -517,7 +528,7 @@
 		rockchip,camera-module-name = "RK-CMK-8M-2-v1";
 		rockchip,camera-module-lens-name = "CK8401";
 		lens-focus = <&vm149c_0>;
-		status = "disabled";
+		status = "okay";
 
 		port {
 			ov13850_out0: endpoint {
@@ -548,15 +559,15 @@
 		/* not save the PMIC_POWER_EN register in uboot */
 		not-save-power-en = <1>;
 
-		vcc1-supply = <&vcc3v3_sys>;
-		vcc2-supply = <&vcc3v3_sys>;
-		vcc3-supply = <&vcc3v3_sys>;
-		vcc4-supply = <&vcc3v3_sys>;
-		vcc5-supply = <&vcc3v3_sys>;
-		vcc6-supply = <&vcc3v3_sys>;
-		vcc7-supply = <&vcc3v3_sys>;
-		vcc8-supply = <&vcc3v3_sys>;
-		vcc9-supply = <&vcc3v3_sys>;
+		vcc1-supply = <&vdd3v3_som>;
+		vcc2-supply = <&vdd3v3_som>;
+		vcc3-supply = <&vdd3v3_som>;
+		vcc4-supply = <&vdd3v3_som>;
+		vcc5-supply = <&vdd3v3_som>;
+		vcc6-supply = <&vdd3v3_som>;
+		vcc7-supply = <&vdd3v3_som>;
+		vcc8-supply = <&vdd3v3_som>;
+		vcc9-supply = <&vdd3v3_som>;
 
 		pwrkey {
 			status = "okay";
@@ -796,7 +807,7 @@
 		reg = <0x0c>;
 		rockchip,camera-module-index = <3>;
 		rockchip,camera-module-facing = "back";
-		status = "disabled";
+		status = "okay";
 	};
 
 	ov13850_1: ov13850@10 {
@@ -812,7 +823,7 @@
 		rockchip,camera-module-name = "RK-CMK-8M-2-v1";
 		rockchip,camera-module-lens-name = "CK8401";
 		lens-focus = <&vm149c_1>;
-		status = "disabled";
+		status = "okay";
 
 		port {
 			ov13850_out1: endpoint {
@@ -832,8 +843,15 @@
 		status = "okay";
 		compatible = "willsemi,wusb3801";
 		reg = <0x60>;
+
+		/* ch482d sel function:
+		 *   L: Port 0 is active
+		 *   H: Port 1 is active
+		 * But both port 0 and port 1 are connected to the same Type-C connectort.
+		 */
 		pinctrl-names = "default";
-		pinctrl-0 = <&wusb3801_int_pin>;
+		pinctrl-0 = <&wusb3801_int_pin &ch482d_sel_pin>;
+
 		interrupt-parent = <&gpio3>;
 		interrupts = <RK_PB6 IRQ_TYPE_LEVEL_LOW>;
 
@@ -866,7 +884,7 @@
 };
 
 &mipi0_csi2 {
-	status = "disabled";
+	status = "okay";
 
 	ports {
 		#address-cells = <1>;
@@ -1020,6 +1038,10 @@
 	};
 
 	usb {
+		ch482d_sel_pin: ch482d-sel-pin {
+			rockchip,pins = <3 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+
 		wusb3801_int_pin: wusb3801-int-pin {
 			rockchip,pins = <3 RK_PB6 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
@@ -1118,7 +1140,7 @@
 };
 
 &rkisp_vir1 {
-	status = "disabled";
+	status = "okay";
 
 	port {
 		#address-cells = <1>;
