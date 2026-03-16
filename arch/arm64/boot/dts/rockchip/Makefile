@@ -109,6 +109,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-zcube1-max.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399pro-rock-pi-n10.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3518-evb1-ddr4-v10.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3528-armsom-sige1.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3528-cd1000.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3528-demo1-lp4-v10.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3528-demo4-ddr4-v10.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3528-demo4-ddr4-v10-linux.dtb
