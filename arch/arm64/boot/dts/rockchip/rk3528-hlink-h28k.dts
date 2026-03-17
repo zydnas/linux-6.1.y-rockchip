@@ -32,6 +32,14 @@
 	status = "okay";
 };
 
+&gpu {
+	status = "okay";
+};
+
+&gpu_bus {
+	status = "okay";
+};
+
 &pcie2x1 {
 	status = "okay";
 	reset-gpios = <&gpio4 RK_PA3 GPIO_ACTIVE_HIGH>;
