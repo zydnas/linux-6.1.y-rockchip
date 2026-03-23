@@ -15,9 +15,9 @@
 	compatible = "boca,tcn100", "tcn,tcn100", "rockchip,rk3588s", "rockchip,rk3588";
 
 	aliases {
-		ethernet0 = &gmac1;
 		mmc0 = &sdhci;
 		serial2 = &uart2;
+		serial9 = &uart9;
 	};
 
 	chosen {
@@ -138,8 +138,6 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		gpio = <&gpio4 RK_PA4 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&vcc5v0_hdmi_en_pin>;
 		vin-supply = <&vcc5v0_sys>;
 	};
 
@@ -170,6 +168,8 @@
 
 	wireless_bluetooth: wireless-bluetooth {
 		compatible = "bluetooth-platdata";
+		clocks = <&xin32k>;
+		clock-names = "ext_clock";
 		bt_port = "ttyS9";
 		uart_rts_gpios = <&gpio3 RK_PD2 GPIO_ACTIVE_LOW>;
 		pinctrl-names = "default", "rts_gpio";
@@ -184,10 +184,13 @@
 
 	wireless_wlan: wireless-wlan {
 		compatible = "wlan-platdata";
+		clocks = <&xin32k>;
+		clock-names = "clk_wifi";
 		wifi_chip_type = "rtl8852be";
 		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_host_wake_irq>;
 		WIFI,host_wake_irq = <&gpio0 RK_PC5 GPIO_ACTIVE_HIGH>;
+		rockchip,grf = <&sys_grf>;
 		status = "okay";
 	};
 
@@ -207,12 +210,55 @@
 	pinctrl-names = "default", "pmic-power-off";
 	pinctrl-0 = <&pmic_pins &rk806_dvs1_null &rk806_dvs2_null &rk806_dvs3_null>;
 	pinctrl-1 = <&rk806_dvs1_slp &rk806_dvs2_slp &rk806_dvs3_slp>;
+
+	regulators {
+		DCDC_REG3 {
+			regulator-max-microvolt = <750000>;
+			regulator-state-mem {
+				/delete-property/ regulator-off-in-suspend;
+				regulator-on-in-suspend;
+				regulator-suspend-microvolt = <750000>;
+			};
+		};
+
+		DCDC_REG9 {
+			regulator-state-mem {
+				/delete-property/ regulator-off-in-suspend;
+				regulator-on-in-suspend;
+			};
+		};
+
+		PLDO_REG1 {
+			regulator-state-mem {
+				/delete-property/ regulator-off-in-suspend;
+				regulator-on-in-suspend;
+			};
+		};
+
+		PLDO_REG4 {
+			regulator-state-mem {
+				/delete-property/ regulator-off-in-suspend;
+				regulator-on-in-suspend;
+			};
+		};
+
+		NLDO_REG3 {
+			regulator-min-microvolt = <750000>;
+			regulator-max-microvolt = <750000>;
+			regulator-state-mem {
+				/delete-property/ regulator-off-in-suspend;
+				regulator-on-in-suspend;
+			};
+		};
+	};
 };
 
 &i2c0 {
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0m2_xfer>;
+	/delete-property/ resets;
+	/delete-property/ reset-names;
 
 	vdd_cpu_big0_s0: vdd_cpu_big0_mem_s0: rk8602@42 {
 		compatible = "rockchip,rk8602";
@@ -249,10 +295,17 @@
 	};
 };
 
+&i2c1 {
+	/delete-property/ resets;
+	/delete-property/ reset-names;
+};
+
 &i2c2 {
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c2m0_xfer>;
+	/delete-property/ resets;
+	/delete-property/ reset-names;
 
 	vdd_npu_s0: vdd_npu_mem_s0: rk8602@42 {
 		compatible = "rockchip,rk8602";
@@ -270,6 +323,21 @@
 			regulator-off-in-suspend;
 		};
 	};
+};
+
+&i2c3 {
+	/delete-property/ resets;
+	/delete-property/ reset-names;
+};
+
+&i2c4 {
+	/delete-property/ resets;
+	/delete-property/ reset-names;
+};
+
+&i2c5 {
+	/delete-property/ resets;
+	/delete-property/ reset-names;
 };
 
 &cpu_l0 {
@@ -308,9 +376,9 @@
 };
 
 &dmc {
-	status = "okay";
-	center-supply = <&vdd_ddr_s0>;
-	mem-supply = <&vdd_log_s0>;
+	status = "disabled";
+	/delete-property/ center-supply;
+	/delete-property/ mem-supply;
 };
 
 &rknpu_mmu {
@@ -446,7 +514,7 @@
 };
 
 &avsd {
-	status = "okay";
+	status = "disabled";
 };
 
 &vdpu {
@@ -496,6 +564,12 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart9m2_xfer &uart9m2_ctsn>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+};
+
+&pwm1 {
+	status = "okay";
 };
 
 &pwm12 {
@@ -537,7 +611,7 @@
 };
 
 &u2phy3 {
-	status = "okay";
+	status = "disabled";
 };
 
 &u2phy0_otg {
@@ -551,8 +625,8 @@
 };
 
 &u2phy3_host {
-	status = "okay";
-	phy-supply = <&vcc5v0_host>;
+	status = "disabled";
+	/delete-property/ phy-supply;
 };
 
 &usb_host0_ehci {
@@ -564,11 +638,11 @@
 };
 
 &usb_host1_ehci {
-	status = "okay";
+	status = "disabled";
 };
 
 &usb_host1_ohci {
-	status = "okay";
+	status = "disabled";
 };
 
 &usbhost3_0 {
@@ -605,6 +679,7 @@
 };
 
 &pcie2x1l1 {
+	/delete-property/ prsnt-gpios;
 	reset-gpios = <&gpio4 RK_PA2 GPIO_ACTIVE_HIGH>;
 	rockchip,init-delay-ms = <100>;
 	vpcie3v3-supply = <&vcc3v3_pcie20_ssd>;
@@ -612,6 +687,7 @@
 };
 
 &pcie2x1l2 {
+	/delete-property/ prsnt-gpios;
 	reset-gpios = <&gpio3 RK_PD1 GPIO_ACTIVE_HIGH>;
 	rockchip,skip-scan-in-resume;
 	vpcie3v3-supply = <&vcc3v3_pcie20_wifi>;
@@ -644,13 +720,16 @@
 	tx_delay = <0x45>;
 };
 
+&hdcp1 {
+	status = "okay";
+};
+
 &hdmi0 {
 	status = "okay";
 	cec-enable = "true";
 	enable-gpios = <&gpio4 RK_PB2 GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&hdmim0_tx0_cec &hdmim0_tx0_hpd &hdmim0_tx0_scl &hdmim0_tx0_sda
-		     &hdmi0_enable_gpio>;
+	pinctrl-0 = <&hdmim0_tx0_cec &hdmim0_tx0_hpd &hdmim0_tx0_scl &hdmim0_tx0_sda>;
 };
 
 &hdmi0_in_vp0 {
@@ -663,6 +742,7 @@
 
 &route_hdmi0 {
 	status = "okay";
+	logo,mode = "fullscreen";
 	connect = <&vp0_out_hdmi0>;
 };
 
@@ -676,9 +756,39 @@
 
 &vop {
 	status = "okay";
-	disable-win-move;
+	/delete-property/ disable-win-move;
+	/delete-property/ vop-supply;
+	/delete-property/ operating-points-v2;
+	/delete-property/ rockchip,aclk-normal-mode-rates;
+	/delete-property/ rockchip,aclk-advanced-mode-rates;
+	clocks = <&cru ACLK_VOP>, <&cru HCLK_VOP>, <&cru DCLK_VOP0>, <&cru DCLK_VOP1>,
+		 <&cru DCLK_VOP2>, <&cru DCLK_VOP3>, <&cru PCLK_VOP_ROOT>, <&cru DCLK_VOP0_SRC>,
+		 <&cru DCLK_VOP1_SRC>, <&cru DCLK_VOP2_SRC>;
+	clock-names = "aclk_vop", "hclk_vop", "dclk_vp0", "dclk_vp1",
+		      "dclk_vp2", "dclk_vp3", "pclk_vop", "dclk_src_vp0",
+		      "dclk_src_vp1", "dclk_src_vp2";
 	assigned-clocks = <&cru ACLK_VOP>;
 	assigned-clock-rates = <800000000>;
+};
+
+&vp0 {
+	rockchip,plane-mask = <0x05>;
+	rockchip,primary-plane = <0x02>;
+};
+
+&vp1 {
+	rockchip,plane-mask = <0x0a>;
+	rockchip,primary-plane = <0x03>;
+};
+
+&vp2 {
+	rockchip,plane-mask = <0x140>;
+	rockchip,primary-plane = <0x08>;
+};
+
+&vp3 {
+	rockchip,plane-mask = <0x280>;
+	rockchip,primary-plane = <0x09>;
 };
 
 &vop_mmu {
@@ -706,6 +816,8 @@
 		| RKPM_USB_WKUP_EN
 		)
 	>;
+	rockchip,virtual-poweroff = <1>;
+	/delete-property/ power-domains;
 };
 
 &pinctrl {
@@ -724,9 +836,6 @@
 			rockchip,pins = <4 RK_PA5 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 
-		vcc5v0_hdmi_en_pin: vcc5v0-hdmi-en-pin {
-			rockchip,pins = <4 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
 	};
 
 	pcie {
@@ -763,9 +872,4 @@
 		};
 	};
 
-	hdmi {
-		hdmi0_enable_gpio: hdmi0-enable-gpio {
-			rockchip,pins = <4 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
 };
